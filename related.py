@@ -15,7 +15,7 @@ def get_movie_data(db, movie_id):
     movie['year'] = str(result[1])
     movie['director'] = result[2]
     movie['genre'] = []
-    results = db.run_query("select videogenre.genre from videogenre inner join videometadatagenre on videogenre.intid=videometadatagenre.idgenre where videometadatagenre.idvideo='"+movie_id+"';")
+    results = db.run_query("select videogenre.genre from videogenre inner join videometadatagenre on videogenre.intid=videometadatagenre.idgenre where videometadatagenre.idvideo='" + movie_id + "';")
     for result in results:
         movie['genre'].append(result[0])
     return movie
@@ -29,7 +29,14 @@ print "%s (%s)" % (current_movie['title'], current_movie['year'])
 
 # get list of all movies released in the same year
 movies_same_year = []
-results = db.run_query("select intid from videometadata where year='"+current_movie['year']+"' and contenttype='MOVIE' and intid <> '" + current_movie['id'] + "';")
+results = db.run_query("select intid from videometadata where contenttype='MOVIE' and intid <> '" + current_movie['id'] + "' and year='" + current_movie['year'] + "';")
 for result in results:
     movies_same_year.append(get_movie_data(db, str(result[0])))
     print "    %s (%s)" % (movies_same_year[-1]['title'], movies_same_year[-1]['year'])
+
+# get list of all movies by same director
+movies_same_director = []
+results = db.run_query("select intid from videometadata where contenttype='MOVIE' and intid <> '" + current_movie['id'] + "' and director='" + current_movie['director'] + "';")
+for result in results:
+    movies_same_director.append(get_movie_data(db, str(result[0])))
+    print "    %s (%s)" % (movies_same_director[-1]['title'], movies_same_director[-1]['director'])
