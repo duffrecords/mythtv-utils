@@ -1,2 +1,5 @@
 mythtv.conf
 *.pyc
+schema.txt
+attributes.txt
+mythtv-movies-by-year.py
