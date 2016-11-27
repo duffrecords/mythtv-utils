@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 from database import Database
-#from collections import Counter
 import sys
+import re
 
 titles_displayed = 21
-director_weight = 3
+director_weight = 3.0
+year_weight = 1.0
+cast_weight = 0.5
 
 def get_random_movie_id(db):
     result = db.run_query("select intid "
@@ -25,14 +27,22 @@ def get_movie_data(db, movie_id):
     movie['year'] = str(result[1])
     movie['director'] = result[2]
     movie['genre'] = []
+    movie['cast'] = []
     movie['similarity'] = 0
     results = db.run_query("select videogenre.genre "
-                            "from videogenre inner "
-                            "join videometadatagenre "
+                            "from videogenre "
+                            "inner join videometadatagenre "
                             "on videogenre.intid=videometadatagenre.idgenre "
                             "where videometadatagenre.idvideo='" + movie_id + "';")
     for result in results:
         movie['genre'].append(result[0])
+    results = db.run_query("select videocast.cast "
+                            "from videocast "
+                            "inner join videometadatacast "
+                            "on videocast.intid=videometadatacast.idcast "
+                            "where videometadatacast.idvideo='" + movie_id + "';")
+    for result in results:
+        movie['cast'].append(result[0])
     return movie
 
 def get_list_index(listname, key, value):
@@ -42,9 +52,12 @@ def get_list_index(listname, key, value):
     except:
         return None
 
+def escape_list(listname):
+    return [re.sub("'", "\\'", s) for s in listname]
+
 db = Database()
 
-# start with a random movie
+# start with user-specified movie or random movie if not specified
 if len(sys.argv) > 1:
     current_movie_title = ' '.join(sys.argv[1:])
     current_movie_id = str(db.run_query("select intid "
@@ -54,7 +67,7 @@ if len(sys.argv) > 1:
 else:
     current_movie_id = get_random_movie_id(db)
 current_movie = get_movie_data(db, current_movie_id)
-print "%s (%s)" % (current_movie['title'], current_movie['year'])
+print "%s (%s) %s" % (current_movie['title'], current_movie['year'], current_movie['director'])
 
 # get list of all movies released in the same year
 movies_same_year = []
@@ -80,7 +93,6 @@ results = db.run_query("select intid, "
 for result in results:
     movies_same_year.append(get_movie_data(db, str(result[0])))
     movies_same_year[-1]['similarity'] += int(result[1])
-    #print "    %s (year: %s) +%s" % (movies_same_year[-1]['title'], movies_same_year[-1]['year'], movies_same_year[-1]['similarity'])
 
 # get list of all movies by same director
 movies_same_director = []
@@ -91,11 +103,10 @@ results = db.run_query("select intid "
                         "and director='" + current_movie['director'] + "';")
 for result in results:
     movies_same_director.append(get_movie_data(db, str(result[0])))
-    #print "    %s (director: %s)" % (movies_same_director[-1]['title'], movies_same_director[-1]['director'])
+    movies_same_director[-1]['similarity'] += 1
 
 # get list of all movies from same genres
 movies_same_genres = []
-#print(','.join(current_movie['genre']))
 results = db.run_query("select vm.intid, "
                         "duplicates.totalCount "
                         "from videometadata vm "
@@ -115,33 +126,45 @@ results = db.run_query("select vm.intid, "
 for result in results:
     movies_same_genres.append(get_movie_data(db, str(result[0])))
     movies_same_genres[-1]['similarity'] += result[1]
-    #print "    %s (%s genres in common)" % (movies_same_genres[-1]['title'], movies_same_genres[-1]['similarity'])
+
+# get list of all movies featuring the same cast
+movies_same_cast = []
+results = db.run_query("select vm.intid, "
+                        "duplicates.totalCount "
+                        "from videometadata vm "
+                        "inner join "
+                            "(select vm.intid, count(*) totalCount "
+                            "from videometadata vm "
+                            "join videometadatacast vmc "
+                            "on vmc.idvideo = vm.intid "
+                            "join videocast vc "
+                            "on vc.intid = vmc.idcast "
+                            "where vm.contenttype='MOVIE' "
+                            "and vc.cast in ('" + "','".join(escape_list(current_movie['cast'])) + "') "
+                            "group by vm.intid) duplicates "
+                        "on vm.intid = duplicates.intid "
+                        "where vm.intid <> '" + current_movie['id'] + "' "
+                        "order by duplicates.totalCount desc limit 100;")
+for result in results:
+    movies_same_cast.append(get_movie_data(db, str(result[0])))
+    movies_same_cast[-1]['similarity'] += result[1]
 
 # merge lists into new list, ordered by similarity
 gallery_list = []
-#print "movies_same_year: %s" % len(movies_same_year)
-#print "movies_same_genres: %s" % len(movies_same_genres)
-#print "movies_same_director: %s" % len(movies_same_director)
-#print "gallery list: %s" % len(gallery_list)
-
 for movie in movies_same_genres:
     if len(gallery_list) >= titles_displayed:
         break
     gallery_list.append(movie)
     m = get_list_index(movies_same_director, 'id', movie['id'])
     if m:
-        #if any(d['id'] == movie['id'] for d in movies_same_director):
-        gallery_list[-1]['similarity'] += director_weight
-        #print "    %s %s" % (gallery_list[-1]['title'], gallery_list[-1]['similarity'])
+        gallery_list[-1]['similarity'] += (movies_same_director[m]['similarity'] * director_weight)
     m = get_list_index(movies_same_year, 'id', movie['id'])
     if m:
-        #if any(d['id'] == movie['id'] for d in movies_same_year):
-        movies_same_year[m]['similarity']
-        gallery_list[-1]['similarity'] += movies_same_year[m]['similarity']
-        #print "    %s %s" % (gallery_list[-1]['title'], gallery_list[-1]['similarity'])
-
-#print "gallery list: %s" % len(gallery_list)
+        gallery_list[-1]['similarity'] += (movies_same_year[m]['similarity'] * year_weight)
+    m = get_list_index(movies_same_cast, 'id', movie['id'])
+    if m:
+        gallery_list[-1]['similarity'] += (movies_same_cast[m]['similarity'] * cast_weight)
 
 gallery_list.sort(key=lambda x: x['similarity'], reverse=True)
 for movie in gallery_list:
-    print "    %s %s" % (movie['similarity'], movie['title'])
+    print "\t%s\t%s" % (movie['similarity'], movie['title'])
