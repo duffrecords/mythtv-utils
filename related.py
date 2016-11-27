@@ -3,6 +3,8 @@
 from database import Database
 from collections import Counter
 
+titles_displayed = 21
+
 def get_random_movie_id(db):
     result = db.run_query("select intid "
                             "from videometadata "
@@ -15,7 +17,7 @@ def get_movie_data(db, movie_id):
     result = db.run_query("select title, year, director "
                             "from videometadata "
                             "where contenttype='MOVIE' "
-                            "and intid='"+movie_id+"';")[0]
+                            "and intid='" + movie_id + "';")[0]
     movie['id'] = movie_id
     movie['title'] = result[0]
     movie['year'] = str(result[1])
@@ -40,14 +42,29 @@ print "%s (%s)" % (current_movie['title'], current_movie['year'])
 
 # get list of all movies released in the same year
 movies_same_year = []
-results = db.run_query("select intid "
+year = int(current_movie['year'])
+plus_or_minus_one = "('" + str(year - 1) + "', '" + str(year + 1) + "')"
+plus_or_minus_two = "('" + str(year - 1) + "', '" + str(year + 1) + "')"
+results = db.run_query("select intid, "
+                        "'3' as similarity "
                         "from videometadata "
                         "where contenttype='MOVIE' "
                         "and intid <> '" + current_movie['id'] + "' "
-                        "and year='" + current_movie['year'] + "';")
+                        "and year='" + current_movie['year'] + "' "
+                        "union select intid, "
+                        "'2' as similarity "
+                        "from videometadata "
+                        "where contenttype='MOVIE' "
+                        "and year in " + plus_or_minus_one + " "
+                        "union select intid, "
+                        "'1' as similarity "
+                        "from videometadata "
+                        "where contenttype='MOVIE' "
+                        "and year in " + plus_or_minus_two + ";")
 for result in results:
     movies_same_year.append(get_movie_data(db, str(result[0])))
-    print "    %s (year: %s)" % (movies_same_year[-1]['title'], movies_same_year[-1]['year'])
+    movies_same_year[-1]['similarity'] += int(result[1])
+    print "    %s (year: %s) +%s" % (movies_same_year[-1]['title'], movies_same_year[-1]['year'], movies_same_year[-1]['similarity'])
 
 # get list of all movies by same director
 movies_same_director = []
@@ -83,3 +100,8 @@ for result in results:
     movies_same_genres.append(get_movie_data(db, str(result[0])))
     movies_same_genres[-1]['similarity'] += int(result[1])
     print "    %s (%s genres in common)" % (movies_same_genres[-1]['title'], movies_same_genres[-1]['similarity'])
+
+# merge lists into new list, ordered by similarity
+#gallery_list = []
+#while len(gallery_list) <= titles_displayed:
+#    similar_movie = 
