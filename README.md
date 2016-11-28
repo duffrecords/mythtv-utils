@@ -1,7 +1,9 @@
 # mythtv-utils
+
 a set of utilities to work with MythTV metadata
 ==============
 ### Configuration
+
 Copy mythtv.example.conf to mythtv.conf and edit with your backend database settings.
 ----------
 ##### Usage
