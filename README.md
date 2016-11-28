@@ -31,4 +31,33 @@ fanart:		tmdb3.py_10378_fanart.jpg
 insertdate:	2016-11-28 14:54:41
 contenttype:	MOVIE
 ```
-----------
+
+```sh
+user@host:~/mythtv-utils$ python related.py Sintel
+Finding movies that are similar to:
+Sintel (2010) Colin Levy
+------------------------
+Score   | Movie
+------------------------
+ 6.0	| How to Train Your Dragon
+ 3.0	| The Tale of the Princess Kaguya
+ 3.0	| Spirited Away
+ 3.0	| The Lego Movie
+ 3.0	| Mind Game
+ 3.0	| Avatar
+ 2.0	| Monsters, Inc.
+ 2.0	| Princess Mononoke
+ 2.0	| Beauty and the Beast
+ 2.0	| The Rescuers
+ 2.0	| The Secret of NIMH
+ 2.0	| Labyrinth
+ 2.0	| E.T. the Extra-Terrestrial
+ 1.0	| Edward Scissorhands
+ 1.0	| The Lord of the Rings: The Fellowship of the Ring
+ 1.0	| Eraserhead
+ 1.0	| Mars Attacks!
+ 1.0	| The Lord of the Rings: The Return of the King
+ 1.0	| Ghost in the Shell
+ 1.0	| The Lord of the Rings: The Two Towers
+ 1.0	| Batman Forever
+ ```
