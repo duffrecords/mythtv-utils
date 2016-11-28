@@ -2,7 +2,9 @@
 
 import os
 import MySQLdb
+import itertools
 from ConfigParser import SafeConfigParser
+from collections import OrderedDict
 
 class Database(object):
 
@@ -23,6 +25,13 @@ class Database(object):
     def run_query(self, query):
         self.cursor.execute(query)
         return self.cursor.fetchall()
+
+    def rows_to_dicts(self, query, params):
+        self.cursor.execute(query, params)
+        desc = self.cursor.description
+        column_names = [col[0] for col in desc]
+        return [OrderedDict(itertools.izip(column_names, row))
+                for row in self.cursor]
 
     def close(self):
         self.connection.close()
