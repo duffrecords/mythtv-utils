@@ -4,8 +4,9 @@ a set of utilities to interact with MythTV
 ### Configuration
 Copy mythtv.example.conf to mythtv.conf and edit with your backend database settings.
 ----------
+##### Usage
 ```sh
-# python lookup_title.py name-of-movie
+user@host:~/mythtv-utils$ python lookup_title.py name-of-movie
 intid:		2161
 title:		Sintel
 subtitle:
