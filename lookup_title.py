@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from database import Database
+from formatting import Formatting
 import sys
 import re
 from math import ceil
@@ -13,9 +14,7 @@ else:
     params = (title,)
     query = "select * from videometadata where title = %s"
 
-blue = '\033[;34m'
-white = '\033[;37m'
-reset = '\033[0m'
+fmt = Formatting()
 
 db = Database()
 metadata = db.rows_to_dicts(query, params)[0]
@@ -39,4 +38,4 @@ for key in ['collectionref',
 
 for key in keys:
     tabs = '\t' * (3 - int(ceil(len(key) / 6.0)))
-    print "%s%s%s:%s%s%s%s" % (blue, key, reset, tabs, white, metadata[key], reset)
+    print "%s%s%s:%s%s%s%s" % (fmt.header, key, fmt.reset, tabs, fmt.text, metadata[key], fmt.reset)

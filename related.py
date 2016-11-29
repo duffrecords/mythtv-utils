@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from database import Database
+from formatting import Formatting
 import sys
 import re
 
@@ -9,6 +10,7 @@ director_weight = 3.0
 year_weight = 1.0
 cast_weight = 0.5
 rating_weight = 1.0
+fmt = Formatting()
 
 def get_random_movie_id(db):
     result = db.run_query("select intid "
@@ -30,7 +32,7 @@ def get_movie_data(db, movie_id):
     movie['rating'] = result[3]
     movie['genre'] = []
     movie['cast'] = []
-    movie['similarity'] = 0
+    movie['similarity'] = 0.0
     results = db.run_query("select videogenre.genre "
                             "from videogenre "
                             "inner join videometadatagenre "
@@ -69,7 +71,12 @@ if len(sys.argv) > 1:
 else:
     current_movie_id = get_random_movie_id(db)
 current_movie = get_movie_data(db, current_movie_id)
-print "%s (%s) %s" % (current_movie['title'], current_movie['year'], current_movie['director'])
+print fmt.reset + "Finding movies that are similar to:\n"
+header =  "%s (%s) %s" % (current_movie['title'], current_movie['year'], current_movie['director'])
+print fmt.header + header + fmt.reset
+print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
+print fmt.header + "Score" + fmt.reset + "   | " + fmt.header + "Movie" + fmt.reset
+print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
 
 # get list of all movies released in the same year
 movies_same_year = []
@@ -161,10 +168,14 @@ results = db.run_query("select vm.intid, "
 for result in results:
     movies_same_cast.append(get_movie_data(db, str(result[0])))
     movies_same_cast[-1]['similarity'] += result[1]
+    #print "%s cast: %s" % (movies_same_cast[-1]['title'], movies_same_cast[-1]['similarity'])
+    #if movies_same_cast[-1]['title'] == 'Quantum of Solace' or movies_same_cast[-1]['title'] == 'Casino Royale':
+        #print "%s has %s of the same actors" % (movies_same_cast[-1]['title'], movies_same_cast[-1]['similarity'])
 
 # merge lists into new list, ordered by similarity
 gallery_list = []
 for movie in movies_same_genres:
+    #print "analyzing %s" % movie['title']
     if len(gallery_list) >= titles_displayed:
         break
     gallery_list.append(movie)
@@ -172,7 +183,7 @@ for movie in movies_same_genres:
     if m:
         increment = movies_same_director[m]['similarity'] * director_weight
         gallery_list[-1]['similarity'] += increment
-        #print "incrementing similarity by %s because of director" % increment
+        #print "incrementing similarity of %s by %s because of director" % (increment, movie['title'])
     m = get_list_index(movies_same_rating, 'id', movie['id'])
     if m:
         increment = movies_same_rating[m]['similarity'] * rating_weight
@@ -187,8 +198,14 @@ for movie in movies_same_genres:
     if m:
         increment = movies_same_cast[m]['similarity'] * cast_weight
         gallery_list[-1]['similarity'] += increment
-        #print "incrementing similarity by %s because of cast" % increment
+        #print "incrementing similarity of %s by %s because of cast" % (increment, movie['title'])
 
 gallery_list.sort(key=lambda x: x['similarity'], reverse=True)
+scores = [movie['similarity'] for movie in gallery_list]
+mean = float(sum(scores) / max(len(scores), 1))
 for movie in gallery_list:
-    print "\t%s\t%s" % (movie['similarity'], movie['title'])
+    if movie['similarity'] > mean:
+        text = fmt.boldtext
+    else:
+        text = fmt.text
+    print " %s%s\t%s|%s %s%s" % (text, movie['similarity'], fmt.ruler, text, movie['title'], fmt.reset)
