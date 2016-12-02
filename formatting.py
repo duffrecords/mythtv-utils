@@ -9,10 +9,10 @@ class Formatting(object):
         configdir = '.'
         config = SafeConfigParser()
         config.read(os.path.join(configdir, 'mythtv.conf'))
-        header_color = config.get('Main', 'HeaderColor')
-        text_color = config.get('Main', 'TextColor')
-        bold_text_color = config.get('Main', 'BoldTextColor')
-        ruler_color = config.get('Main', 'RulerColor')
+        header_color = config.get('Appearance', 'HeaderColor')
+        text_color = config.get('Appearance', 'TextColor')
+        bold_text_color = config.get('Appearance', 'BoldTextColor')
+        ruler_color = config.get('Appearance', 'RulerColor')
         color_codes = {
                     'reset':        '\033[;0m',
                     'black':        '\033[0;30m',
