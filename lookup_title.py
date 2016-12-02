@@ -17,7 +17,13 @@ else:
 fmt = Formatting()
 
 db = Database()
-metadata = db.rows_to_dicts(query, params)[0]
+results = db.rows_to_dicts(query, params)
+if len(results) != 1:
+    print "Couldn't find movie!"
+    sys.exit()
+else:
+    metadata = results[0]
+
 for key in ['genre', 'cast']:
     query = ("select video" + key + "." + key + " from video" + key +
             " inner join videometadata" + key +
