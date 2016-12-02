@@ -22,8 +22,8 @@ class Database(object):
                                           db=self.db)
         self.cursor = self.connection.cursor()
 
-    def run_query(self, query):
-        self.cursor.execute(query)
+    def run_query(self, query, params):
+        self.cursor.execute(query, params)
         return self.cursor.fetchall()
 
     def rows_to_dicts(self, query, params):

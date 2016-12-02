@@ -18,6 +18,13 @@ fmt = Formatting()
 
 db = Database()
 metadata = db.rows_to_dicts(query, params)[0]
+for key in ['genre', 'cast']:
+    query = ("select video" + key + "." + key + " from video" + key +
+            " inner join videometadata" + key +
+            " on video" + key + ".intid = videometadata" + key + ".id" + key +
+            " where videometadata" + key + ".idvideo = %s")
+    params = (metadata['intid'],)
+    metadata[key] = ', '.join([i[0].decode('latin-1', 'replace') for i in db.run_query(query, params)])
 keys = metadata.keys()
 
 for key in ['collectionref',
