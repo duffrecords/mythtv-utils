@@ -66,30 +66,36 @@ def escape_list(listname):
 
 # start with user-specified movie or random movie if not specified
 if len(sys.argv) > 1:
-    current_movie_title = ' '.join(sys.argv[1:])
+    if sys.argv[1] == '--batch' or sys.argv[1] == '-B':
+        batch_mode = True
+        current_movie_title = ' '.join(sys.argv[2:])
+    else:
+        batch_mode = False
+        current_movie_title = ' '.join(sys.argv[1:])
     query = ("select intid from videometadata "
             "where contenttype='MOVIE' and title = %s")
     result = db.run_query(query, (current_movie_title,))
     if len(result) != 1:
         print "Couldn't find movie!"
-        sys.exit()
+        sys.exit(1)
     current_movie_id = str(result[0][0])
 else:
     current_movie_id = get_random_movie_id(db)
 current_movie = get_movie_data(db, current_movie_id)
 
 # print table with formatting
-print fmt.reset + "Finding movies that are similar to:\n"
-header =  "%s (%s) %s" % (current_movie['title'],
-                          current_movie['year'],
-                          current_movie['director'])
-print fmt.header + header + fmt.reset
-print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
-print "%sScore%s   | %sMovie%s" % (fmt.header,
-                                   fmt.reset,
-                                   fmt.header,
-                                   fmt.reset)
-print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
+if not batch_mode:
+    print fmt.reset + "Finding movies that are similar to:\n"
+    header =  "%s (%s) %s" % (current_movie['title'],
+                              current_movie['year'],
+                              current_movie['director'])
+    print fmt.header + header + fmt.reset
+    print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
+    print "%sScore%s   | %sMovie%s" % (fmt.header,
+                                       fmt.reset,
+                                       fmt.header,
+                                       fmt.reset)
+    print fmt.ruler + ("-" * min(len(header), 80)) + fmt.reset
 
 # get list of all movies released in the same year
 similar_movies['year'] = []
@@ -194,6 +200,9 @@ for movie in gallery_list:
         text = fmt.boldtext
     else:
         text = fmt.text
-    print " %s%s\t%s|%s %s%s" % (text, movie['similarity'],
-                                fmt.ruler,
-                                text, movie['title'], fmt.reset)
+    if not batch_mode:
+        print " %s%s\t%s|%s %s%s" % (text, movie['similarity'],
+                                    fmt.ruler,
+                                    text, movie['title'], fmt.reset)
+    else:
+        print "%s" % movie['title']

@@ -9,7 +9,8 @@ from collections import OrderedDict
 class Database(object):
 
     def __init__(self):
-        configdir = '.'
+        #configdir = '.'
+        configdir = os.path.dirname(os.path.realpath(__file__))
         config = SafeConfigParser()
         config.read(os.path.join(configdir, 'mythtv.conf'))
         self.host = config.get('Main', 'Host')

@@ -6,7 +6,8 @@ from ConfigParser import SafeConfigParser
 class Formatting(object):
 
     def __init__(self):
-        configdir = '.'
+        #configdir = '.'
+        configdir = os.path.dirname(os.path.realpath(__file__))
         config = SafeConfigParser()
         config.read(os.path.join(configdir, 'mythtv.conf'))
         header_color = config.get('Appearance', 'HeaderColor')
