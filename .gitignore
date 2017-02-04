@@ -1,5 +1,10 @@
+.gitignore
 mythtv.conf
 *.pyc
+*.swp
 schema.txt
 attributes.txt
 mythtv-movies-by-year.py
+top.py
+best-picture.txt
+webpage*.html
