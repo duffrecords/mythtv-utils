@@ -54,6 +54,7 @@ def main(argv):
             link = tr.find('a', {'title': 'Torrent magnet link'})['href']
             title = tr.find('a', class_='cellMainLink').get_text()
             size = tr.find_all('td')[1].get_text()
+            seeders = int(tr.find_all('td')[3].get_text())
             if 'MiB' in size:
                 size = float(size.split()[0]) / 1024
             elif 'GiB' in size:
@@ -80,13 +81,17 @@ def main(argv):
                         score = score + 3
                     else:
                         score = score + 2
-                torrent = { 'title': title, 'link': link, 'size': size, 'score': score }
+                if seeders == 0:
+                    score = score - 3
+                elif seeders > 1:
+                    score = score + 1
+                torrent = { 'title': title, 'link': link, 'size': size, 'seeders': seeders, 'score': score }
                 torrents.append(torrent)
     
     torrents = sorted(torrents, key=lambda torrent: torrent['score'], reverse=True)
     
     for t in torrents[:10]:
-        print "%s  %.1f GiB\t%s" % (t['score'], t['size'], t['title'])
+        print "%s  %s  %.1f GiB\t%s" % (t['score'], t['seeders'], t['size'], t['title'])
 
 if __name__ == "__main__":
     main(sys.argv[1:])
