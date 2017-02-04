@@ -12,6 +12,7 @@ def main(argv):
     except getopt.GetoptError:
         print "find_torrents.py -n '<name of movie>' -y <year>"
         sys.exit(2)
+    year = ''
     for opt, arg in opts:
         if opt == '-h':
             print "find_torrents.py -n '<name of movie>' -y <year>"
@@ -36,15 +37,16 @@ def main(argv):
     too_big = 17.0
     torrents = []
     
+    search_results = []
     query = re.sub(' ', '+', name)
     r = requests.get("https://kickass.cd/search.php?q=%s" % query)
-    html_doc = r.content
+    search_results.append(r.content)
     #html_doc = open('webpage2.html', 'r')
     if year:
         r2 = requests.get("https://kickass.cd/search.php?q=%s+%s" % (query, year))
-        html_doc_2 = r2.content
+        search_results.append(r2.content)
     #html_doc_2 = open('webpage2.html', 'r')
-    for doc in [ html_doc, html_doc_2 ]:
+    for doc in search_results:
         soup = BeautifulSoup(doc, 'lxml')
         div = soup.find(id='mainSearchTable')
         for tr in div.find_all('tr', class_='odd'):
@@ -84,7 +86,7 @@ def main(argv):
     torrents = sorted(torrents, key=lambda torrent: torrent['score'], reverse=True)
     
     for t in torrents[:10]:
-        print "%s %s\t%s" % (t['score'], t['size'], t['title'])
+        print "%s  %.1f GiB\t%s" % (t['score'], t['size'], t['title'])
 
 if __name__ == "__main__":
     main(sys.argv[1:])
