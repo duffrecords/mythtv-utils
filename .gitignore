@@ -1,5 +1,7 @@
 .gitignore
 mythtv.conf
+transmission.conf
+tmdb.conf
 *.pyc
 *.swp
 schema.txt
