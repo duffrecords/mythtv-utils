@@ -12,10 +12,10 @@ from transmission import Transmission
 from tmdb import TMDB
 
 def main(argv):
-    optional_args = '[-y <year>] [-s] [--allow-chronologies] [--high-quality]'
+    optional_args = '[-y <year>] [-s] [--allow-chronologies] [--high-quality] [--debug]'
     try:
         opts, args = getopt.getopt(argv, "hn:y:s",
-                ["name=","year=","single","allow-chronologies","high-quality"])
+                ["name=","year=","single","allow-chronologies","high-quality", "debug"])
     except getopt.GetoptError:
         print "find_torrents.py -n '<name of movie>' " + optional_args
         sys.exit(2)
@@ -23,6 +23,7 @@ def main(argv):
     single = False
     chronologies = False
     high_quality = False
+    debug = False
     for opt, arg in opts:
         if opt == '-h':
             print "find_torrents.py -n '<name of movie>' " + optional_args
@@ -37,6 +38,8 @@ def main(argv):
             chronologies = True
         elif opt == '--high-quality':
             high_quality = True
+        elif opt == '--debug':
+            debug = True
 
     transmission = Transmission()
     transmission_creds = transmission.user + ':' + transmission.password
@@ -59,7 +62,7 @@ def main(argv):
     great_words = [ year, ] + title_variations
     good_words = [ 'BrRip', 'BDRip', 'BRRip', 'BluRay', 'Bluray',
                     'x264', 'H.264' ]
-    bad_words = [ 'DVDR', 'PAL', 'DvDrip', '480p' ]
+    bad_words = [ 'DVDR', 'PAL', 'DvDrip', 'DVDrip', 'DVDscr', '480p' ]
     avoid_words = [ 'YIFY', 'H.265', 'h265', 'x265', 'HEVC' ]
     if '3D' not in name:
         avoid_words.append('3D')
@@ -115,10 +118,9 @@ def main(argv):
                 size = float(size.split()[0])
             else:
                 rejected = True
-            chronology_matches = [ w in title.lower() for w in chronology_words ]
-            score = score - math.log(len(chronology_matches))
-            if (any(chronology_matches)
-                and re.search(r'\d{4}[-\s]\d{4}', title)
+            chronology_matches = [ w for w in chronology_words if w in title.lower() and w not in name.lower() ]
+            if ((any(chronology_matches)
+                or re.search(r'\d{4}[-\s]\d{4}', title))
                 and not chronologies):
                     rejected = True
             if title not in [ t['title'] for t in torrents ]:
@@ -132,7 +134,9 @@ def main(argv):
                                 'link': link,
                                 'size': size,
                                 'seeders': seeders,
-                                'score': score
+                                'score': score,
+                                'analysis': '',
+                                'res': ''
                                 }
                         start_list.append(torrent)
 
@@ -143,31 +147,50 @@ def main(argv):
     for torrent in start_list:
         if any(w in torrent['title'] for w in ['1080p','1080i']):
             hd1080.append(torrent)
+            torrent['res'] = '1080p'
         elif '720p' in torrent['title']:
             hd720.append(torrent)
+            torrent['res'] = '720p'
         else:
             other.append(torrent)
+            torrent['res'] = ''
 
     # score torrents based on keywords, size, and number of seeders
     for tlist in [ hd1080, hd720, other ]:
         for torrent in tlist:
-            torrent['score'] = torrent['score'] + math.log(torrent['seeders'])
+            delta = math.log(torrent['seeders'], 16)
+            torrent['analysis'] = torrent['analysis'] + 'seeders: %.2f ' % delta
+            torrent['score'] = torrent['score'] + delta
             for w in great_words:
                 if w in torrent['title']:
-                    torrent['score'] = torrent['score'] + 2
+                    delta = 2
+                    torrent['analysis'] = torrent['analysis'] + 'great_words: ' + str(delta) + ' '
+                    torrent['score'] = torrent['score'] + delta
             for w in good_words:
                 if w in torrent['title']:
-                    torrent['score'] = torrent['score'] + 1
+                    delta = 1
+                    torrent['analysis'] = torrent['analysis'] + 'good_words: ' + str(delta) + ' '
+                    torrent['score'] = torrent['score'] + delta
             for w in bad_words:
                 if w in torrent['title']:
-                    torrent['score'] = torrent['score'] - 1
+                    delta = -1
+                    torrent['analysis'] = torrent['analysis'] + 'bad_words: ' + str(delta) + ' '
+                    torrent['score'] = torrent['score'] + delta
             if torrent['size'] < ideal_min:
-                torrent['score'] = torrent['score'] - 2
+                delta = 1.0 * ((math.log(torrent['size'] / math.log(torrent['size']+1)) + 1) + (math.log(torrent['size'] / math.log(torrent['size']+1)) * 15) - 6) / 2
+                torrent['analysis'] = torrent['analysis'] + 'size: %.2f ' % delta
+                torrent['score'] = torrent['score'] + delta
             if torrent['size'] > ideal_max:
-                torrent['score'] = torrent['score'] - 1
-            if high_quality:
-                if torrent['size'] > hiq_min or torrent['size'] < hiq_max:
-                    torrent['score'] = torrent['score'] + (torrent['size'] / 2) * math.log(torrent['size'])
+                delta = -1
+                torrent['analysis'] = torrent['analysis'] + 'size: %.2f ' % delta
+                torrent['score'] = torrent['score'] + delta
+            if torrent['size'] > hiq_min or torrent['size'] < hiq_max:
+                if high_quality:
+                    delta = (torrent['size'] / 2) * math.log(torrent['size'])
+                else:
+                    delta = 1
+                torrent['analysis'] = torrent['analysis'] + 'hq: %.2f ' % delta
+                torrent['score'] = torrent['score'] + delta
 
         # sort torrents by score
         for torrent in sorted(tlist, key=lambda t: t['score'], reverse=True):
@@ -181,12 +204,16 @@ def main(argv):
                         '--auth', transmission_creds,
                         '-a', final_list[0]['link']
                         ]).communicate()
+        print(torrent['res'])
     else:
         for torrent in final_list[:10]:
             print "%.2f  %s  %.1f GiB\t%s" % (torrent['score'],
                                             torrent['seeders'],
                                             torrent['size'],
                                             torrent['title'])
+            if debug:
+                print "%s" % torrent['analysis']
+                print ""
 
 if __name__ == "__main__":
     main(sys.argv[1:])
