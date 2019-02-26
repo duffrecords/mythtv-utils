@@ -22,6 +22,18 @@ lang_full = {
 }
 
 
+def text_to_integer(text):
+    if 'K' in text:
+        integer = int(float(text.split()[0]) * 1000)
+    elif 'M' in text:
+        integer = int(float(text.split()[0]) * 1000000)
+    elif 'B' in text:
+        integer = int(float(text.split()[0]) * 1000000000)
+    else:
+        integer = int(float(text))
+    return integer
+
+
 def search_zooqle(name):
     query_string = urllib.parse.quote_plus(name)
     r = requests.get(f'{domain}/search?q={query_string}')
@@ -75,20 +87,54 @@ def get_zooqle_suggestions(name, req_year=None):
             year = li.find('div', class_='sugInfo').get_text().split()[0]
         except AttributeError:
             year = None
-        results.append({'title': title, 'year': year, 'url': f'{domain}{url}'})
+        try:
+            info = li.find('div', class_='sugInfo')
+            if info.find('i', class_='zqf-movies'):
+                category = 'movie'
+            elif info.find('i', class_='zqf-tv'):
+                category = 'tv show'
+            elif info.find('i', class_='zqf-game'):
+                category = 'game'
+            else:
+                category = None
+        except AttributeError:
+            category = None
+        results.append({
+            'title': title,
+            'year': year,
+            'url': f'{domain}{url}',
+            'category': category
+        })
         if title.lower() == name.lower() and req_year and req_year == year:
             perfect_match.append({'title': title, 'year': year, 'url': f'{domain}{url}'})
-    if perfect_match:
-        return perfect_match
-    else:
-        return results
+    return perfect_match if perfect_match else results
 
 
-def list_available_torrents(url):
+def list_available_torrents(url, category, season=None, episode=None):
     results = []
     res = ''
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'lxml')
+    try:
+        if soup.find('table', id='headcontent').find('i', class_='zqf-tv') and not season:
+            raise Exception('Found a TV show but season was not specified')
+    except AttributeError:
+        pass
+    # if requesting a specific season/episode, the torrent list will be on another page
+    if season:
+        if not episode:
+            raise Exception('Found a TV show but episode was not specified')
+        se_div = soup.find('div', id=f'se_{season}')
+        if se_div:
+            if episode:
+                for li in se_div.find_all('li'):
+                    if li.find('div', id=f'eps_{season}_{episode}'):
+                        try:
+                            eps_href = li.find('div', class_='pull-right').find('a')['href']
+                        except AttributeError:
+                            continue
+                        r = requests.get(f'{domain}{eps_href}')
+                        soup = BeautifulSoup(r.content, 'lxml')
     table = soup.find('table', class_='table-torrents')
     for tr in table.find_all('tr'):
         tds = tr.find_all('td')
@@ -112,12 +158,14 @@ def list_available_torrents(url):
         age = tds[3].get_text()
         try:
             seeders = tds[4].find('div', class_='prog-green').get_text()
+            seeders = text_to_integer(seeders)
         except AttributeError:
-            seeders = '0'
+            seeders = 0
         try:
             leechers = tds[4].find('div', class_='prog-yellow').get_text()
+            leechers = text_to_integer(leechers)
         except AttributeError:
-            leechers = '0'
+            leechers = 0
         results.append({
             'title': title,
             'url': f'{domain}{link}',
@@ -126,8 +174,8 @@ def list_available_torrents(url):
             'languages': languages,
             'size': size,
             'age': age,
-            'seeders': int(seeders),
-            'leechers': int(leechers)
+            'seeders': seeders,
+            'leechers': leechers
         })
     return results
 
@@ -172,13 +220,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--name', required=True, help='name of movie')
     parser.add_argument('--year', default=None, help='year of release')
+    parser.add_argument('--season', default=None, help='season number')
+    parser.add_argument('--episode', default=None, help='episode number')
     args = parser.parse_args()
 
     # results = search_zooqle(args.name)
     results = get_zooqle_suggestions(args.name, req_year=args.year)
     print('--- matching title(s) ---')
     print(json.dumps(results, indent=2))
-    results = list_available_torrents(results[0]['url'])
+    results = list_available_torrents(results[0]['url'], season=args.season, episode=args.episode)
     print('--- top results ---')
     print(json.dumps(results[:5], indent=2))
     results[0].update(get_torrent_details(results[0]['url']))

@@ -1,0 +1,17 @@
+welcome: |
+  Hi, what can I help you with?
+
+welcome_re: |
+  What can I help you with?
+
+stop_bye: |
+  Goodbye!
+
+cancel_bye: |
+  Goodbye!
+
+help_text: |
+  I can help you download movies or TV shows.
+
+first_suggestion: |
+  I found a {{ category}} titled {{ title }}, released in {{ year }}. Does that sound like the right one?

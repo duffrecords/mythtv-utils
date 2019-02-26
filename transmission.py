@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+from configparser import SafeConfigParser
 import os
-from ConfigParser import SafeConfigParser
+
 
 class Transmission(object):
 

@@ -1,4 +1,5 @@
 .gitignore
+config.ini
 mythtv.conf
 transmission.conf
 tmdb.conf
