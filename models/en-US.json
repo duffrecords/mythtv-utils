@@ -1,0 +1,204 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "tv bot",
+            "intents": [
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "DownloadIntent",
+                    "slots": [
+                        {
+                            "name": "title",
+                            "type": "AMAZON.Movie",
+                            "samples": [
+                                "{title}"
+                            ]
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE"
+                        }
+                    ],
+                    "samples": [
+                        "download {title} please",
+                        "can you download {title}",
+                        "could you download the movie {title} for me",
+                        "could you download the movie {title}",
+                        "download {title}",
+                        "download the {year} film {title}",
+                        "download the film {title}",
+                        "download the {year} movie {title}",
+                        "download the movie {title}",
+                        "download a movie"
+                    ]
+                },
+                {
+                    "name": "YesIntent",
+                    "slots": [
+                        {
+                            "name": "title",
+                            "type": "AMAZON.Movie"
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE"
+                        }
+                    ],
+                    "samples": [
+                        "yes {title} is the right movie",
+                        "yes {year}",
+                        "yeah that's it",
+                        "yup it is",
+                        "yeah it is",
+                        "yes it is",
+                        "uh huh",
+                        "you got it",
+                        "you bet",
+                        "yeah ok",
+                        "yeah that's the one",
+                        "that's the one",
+                        "that's the right one",
+                        "that sounds right",
+                        "that's right",
+                        "that's correct",
+                        "yes ma'am",
+                        "yes sir",
+                        "yep",
+                        "yup",
+                        "yes please",
+                        "sure",
+                        "ok",
+                        "yeah",
+                        "yes"
+                    ]
+                },
+                {
+                    "name": "NoIntent",
+                    "slots": [
+                        {
+                            "name": "title",
+                            "type": "AMAZON.Movie"
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE"
+                        }
+                    ],
+                    "samples": [
+                        "no {title} is not the right movie",
+                        "no {year}",
+                        "no no no",
+                        "no thank you",
+                        "no thanks",
+                        "definitely not",
+                        "no that isn't it",
+                        "nope that's wrong",
+                        "nope that isn't it",
+                        "no that's wrong",
+                        "no it is not",
+                        "no it's not",
+                        "no it isn't",
+                        "negative",
+                        "that's wrong",
+                        "that's not right",
+                        "that's not the right one",
+                        "that's the wrong one",
+                        "I don't think so",
+                        "no I don't think so",
+                        "nope that's not the right one",
+                        "no that's not the right one",
+                        "nope that's not right",
+                        "no that's not right",
+                        "nope that's the wrong one",
+                        "no that's the wrong one",
+                        "nope that's not it",
+                        "no that's not it",
+                        "no way",
+                        "no ma'am",
+                        "no sir",
+                        "nope",
+                        "no"
+                    ]
+                },
+                {
+                    "name": "MovieTitleIntent",
+                    "slots": [
+                        {
+                            "name": "title",
+                            "type": "AMAZON.Movie"
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE"
+                        }
+                    ],
+                    "samples": [
+                        "the {year} remake of {title}",
+                        "the {year} version of {title}",
+                        "{title}"
+                    ]
+                }
+            ],
+            "types": []
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "DownloadIntent",
+                    "delegationStrategy": "ALWAYS",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "title",
+                            "type": "AMAZON.Movie",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.578504046450.1163922720373"
+                            }
+                        },
+                        {
+                            "name": "year",
+                            "type": "AMAZON.DATE",
+                            "confirmationRequired": false,
+                            "elicitationRequired": false,
+                            "prompts": {}
+                        }
+                    ]
+                }
+            ],
+            "delegationStrategy": "ALWAYS"
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.578504046450.1163922720373",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What would you like me to download?"
+                    }
+                ]
+            }
+        ]
+    }
+}
