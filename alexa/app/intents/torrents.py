@@ -29,7 +29,7 @@ class YesIntent(AbstractRequestHandler):
 
 class NoIntent(AbstractRequestHandler):
     def can_handle(self, handler_input):
-        return is_intent_name("AMAZON.NoIntent")(handler_input)
+        return is_intent_name("NoIntent")(handler_input)
 
     def handle(self, handler_input):
         if session.attributes['state'] == 'confirm torrent title':
