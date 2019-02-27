@@ -1,0 +1,54 @@
+{
+  "context": {
+    "System": {
+      "apiAccessToken": "",
+      "apiEndpoint": "https://api.amazonalexa.com",
+      "application": {
+        "applicationId": "amzn1.ask.skill."
+      },
+      "device": {
+        "deviceId": "amzn1.ask.device.",
+        "supportedInterfaces": {}
+      },
+      "user": {
+        "userId": "amzn1.ask.account."
+      }
+    },
+    "Viewport": {
+      "dpi": 160,
+      "currentPixelHeight": 600,
+      "currentPixelWidth": 1024,
+      "dpi": 160,
+      "experiences": [{
+        "arcMinuteHeight": 144,
+        "arcMinuteWidth": 246,
+        "canResize": false,
+        "canRotate": false
+      }],
+      "pixelHeight": 600,
+      "pixelWidth": 1024,
+      "shape": "RECTANGLE",
+      "touch": [
+        "SINGLE"
+      ]
+    }
+  },
+  "request": {
+    "locale": "en-US",
+    "requestId": "amzn1.echo-api.request.",
+    "shouldLinkResultBeReturned": false,
+    "timestamp": null,
+    "type": "LaunchRequest"
+  },
+  "session": {
+    "application": {
+      "applicationId": "amzn1.ask.skill."
+    },
+    "new": true,
+    "sessionId": "amzn1.echo-api.session.",
+    "user": {
+      "userId": "amzn1.ask.account."
+    }
+  },
+  "version": "1.0"
+}

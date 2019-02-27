@@ -1,0 +1,63 @@
+{
+  "context": {
+    "audioPlayer": null,
+    "display": null,
+    "System": {
+      "apiAccessToken": "",
+      "apiEndpoint": "https://api.amazonalexa.com",
+      "application": {
+        "applicationId": "amzn1.ask.skill."
+      },
+      "device": {
+        "deviceId": "amzn1.ask.device.",
+        "supportedInterfaces": {}
+      },
+      "user": {
+        "userId": "amzn1.ask.account."
+      }
+    },
+    "Viewport": {
+      "currentPixelHeight": 600,
+      "currentPixelWidth": 1024,
+      "dpi": 160,
+      "experiences": [{
+        "arcMinuteHeight": 144,
+        "arcMinuteWidth": 246,
+        "canResize": false,
+        "canRotate": false
+      }],
+      "keyboard": null,
+      "pixelHeight": 600,
+      "pixelWidth": 1024,
+      "shape": "RECTANGLE",
+      "touch": [
+        "SINGLE"
+      ]
+    }
+  },
+  "request": {
+    "dialogState": "STARTED",
+    "intent": {
+      "confirmationStatus": "NONE",
+      "name": "IntentName"
+    },
+    "locale": "en-US",
+    "requestId": "amzn1.echo-api.request.",
+    "timestamp": null,
+    "type": "IntentRequest"
+  },
+  "session": {
+    "application": {
+      "applicationId": "amzn1.ask.skill."
+    },
+    "attributes": {},
+    "new": false,
+    "sessionId": "amzn1.echo-api.session.",
+    "user": {
+      "accessToken": null,
+      "permissions": null,
+      "userId": "amzn1.ask.account."
+    }
+  },
+  "version": "1.0"
+}

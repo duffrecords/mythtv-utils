@@ -71,11 +71,12 @@ def get_zooqle_suggestions(name, req_year=None):
     results = []
     perfect_match = []
     r = requests.get(f'{domain}/search?q={query_string}')
+    logger.debug(f'zooqle status code: {r.status_code}')
     soup = BeautifulSoup(r.content, 'lxml')
     ul = soup.find('ul', class_='suglist')
     if not ul:
         return []
-    logger.debug('parsing {} title results from zoogle.com'.format(len(ul)))
+    logger.debug('parsing {} title results from zooqle.com'.format(len(ul)))
     for li in ul:
         try:
             title = li['title']

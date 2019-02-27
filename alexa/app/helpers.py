@@ -18,6 +18,7 @@ def get_slot(name):
 
 def get_suggestion(title, req_year=None):
     if not session.attributes['zooqle']['suggestions']:
+        logger.debug(f'searching zooqle for {title}')
         session.attributes['zooqle']['suggestions'] = get_zooqle_suggestions(title, req_year=req_year)
     try:
         return session.attributes['zooqle']['suggestions'][0]
