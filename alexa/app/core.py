@@ -2,7 +2,7 @@ from app.config import config, intent, session
 from app.intents.built_in import (
     StopIntent, CancelIntent, HelpIntent, PreviousIntent
 )
-from app.intents.torrent import (
+from app.intents.torrents import (
     DownloadIntentHandler, MovieTitleHandler, YesIntentHandler, NoIntentHandler
 )
 from app.logger import logger
