@@ -2,6 +2,9 @@ from app.config import config, intent, session
 from app.intents.built_in import (
     StopIntent, CancelIntent, HelpIntent, PreviousIntent
 )
+from app.intents.torrent import (
+    DownloadIntentHandler, MovieTitleHandler, YesIntentHandler, NoIntentHandler
+)
 from app.logger import logger
 from app.ssml import join_ssml
 from app.templating import render_template
@@ -30,8 +33,8 @@ class LaunchRequestHandler(AbstractRequestHandler):
         }
         welcome = render_template('welcome')
         reprompt = render_template('welcome_re')
-        speech = join_ssml([welcome, reprompt])
-        handler_input.response_builder.speak(speech).ask(reprompt)
+        # welcome = join_ssml([welcome, reprompt])
+        handler_input.response_builder.speak(welcome).ask(reprompt)
         return handler_input.response_builder.response
 
 
@@ -126,10 +129,12 @@ sb.add_request_handler(StopIntent())
 sb.add_request_handler(CancelIntent())
 sb.add_request_handler(HelpIntent())
 sb.add_request_handler(PreviousIntent())
-# sb.add_request_handler(YesIntent())
-# sb.add_request_handler(NoIntent())
+sb.add_request_handler(YesIntentHandler())
+sb.add_request_handler(NoIntentHandler())
 # sb.add_request_handler(StartOverIntent())
 # sb.add_request_handler(PauseIntent())
+sb.add_request_handler(DownloadIntentHandler())
+sb.add_request_handler(MovieTitleHandler())
 
 # Add exception handler and request/response loggers to the skill.
 sb.add_exception_handler(CatchAllExceptionHandler())
