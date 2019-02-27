@@ -3,6 +3,7 @@ config.ini
 mythtv.conf
 transmission.conf
 tmdb.conf
+*.log
 *.pyc
 *.swp
 schema.txt
