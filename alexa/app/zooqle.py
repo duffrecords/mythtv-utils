@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from app.logger import logger
 import argparse
 from bs4 import BeautifulSoup
 import json
@@ -74,6 +75,7 @@ def get_zooqle_suggestions(name, req_year=None):
     ul = soup.find('ul', class_='suglist')
     if not ul:
         return []
+    logger.debug('parsing {} title results from zoogle.com'.format(len(ul)))
     for li in ul:
         try:
             title = li['title']

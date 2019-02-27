@@ -58,6 +58,8 @@ class DownloadIntentHandler(AbstractRequestHandler):
         logger.info('user requested a download')
         title = get_slot('title')
         req_year = get_slot('year')
+        logger.debug(f'title: {title}')
+        logger.debug(f'year: {req_year}')
         if not title:
             logger.info('prompting user for the title of the movie/TV show')
             speech = "What would you like me to download?"
@@ -68,12 +70,15 @@ class DownloadIntentHandler(AbstractRequestHandler):
         if not session.attributes['zooqle']['selected title']:
             logger.info('asking user if this is the correct title')
             suggestion = get_suggestion(title, req_year=req_year)
-            speech = render_template(
-                'first_suggestion',
-                category=suggestion['category'],
-                title=suggestion['title'],
-                year=suggestion['year']
-            )
+            if not suggestion:
+                speech = f"I couldn't find anything matching {title}."
+            else:
+                speech = render_template(
+                    'first_suggestion',
+                    category=suggestion['category'],
+                    title=suggestion['title'],
+                    year=suggestion['year']
+                )
             handler_input.response_builder.speak(speech).ask(speech)
             return handler_input.response_builder.response
         selected_title = session.attributes['zooqle']['selected title']

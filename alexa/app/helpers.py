@@ -18,8 +18,11 @@ def get_slot(name):
 
 def get_suggestion(title, req_year=None):
     if not session.attributes['zooqle']['suggestions']:
-        session.attributes['zooqle']['suggestions'] = get_zooqle_suggestions(title, req_year)
-    return session.attributes['zooqle']['suggestions'][0]
+        session.attributes['zooqle']['suggestions'] = get_zooqle_suggestions(title, req_year=req_year)
+    try:
+        return session.attributes['zooqle']['suggestions'][0]
+    except IndexError:
+        return None
 
 
 def format_catalog(season=None, episode=None):
