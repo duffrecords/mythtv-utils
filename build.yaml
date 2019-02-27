@@ -3,7 +3,7 @@ function:
   runtimes:
     - python3.6
   files:
-    - app
+    - app/
   source_dir: alexa
 layers:
   dependencies:
