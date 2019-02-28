@@ -49,7 +49,7 @@ class RequestLogger(AbstractRequestInterceptor):
             except AttributeError:
                 intent_name = ''
             logger.debug('intent: {}'.format(intent_name))
-            if config.log_all_events:
+            if os.environ.get('LOG_ALL_EVENTS', 'false') == 'true':
                 if 'AWS_EXECUTION_ENV' in os.environ:
                     logger.debug(f"Incoming request\n{handler_input.request_envelope}")
                 else:
@@ -66,7 +66,7 @@ class RequestLogger(AbstractRequestInterceptor):
 
 class ResponseLogger(AbstractResponseInterceptor):
     def process(self, handler_input, response):
-        if os.environ['log_level'] == 'debug' and config.log_all_events:
+        if os.environ['log_level'] == 'debug' and os.environ.get('LOG_ALL_EVENTS', 'false') == 'true':
             if 'AWS_EXECUTION_ENV' in os.environ:
                 logger.debug(f"Response: {response}")
             else:
@@ -84,7 +84,7 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         logger.error('exception attributes: {}'.format(dir(exception)))
         # filename, lineno, funname, line = traceback.extract_tb(exception.__traceback__)[-1]
         # exception_type = re.sub('([a-z])([A-Z])', r'\1 \2', sys.last_type.__qualname__)
-        if config.handle_all_exceptions:
+        if os.environ.get['handle_all_exceptions']:
             speech = 'The following exception occurred: {}'.format(exception.splitlines()[0])
         else:
             speech = 'An exception occurred.'
