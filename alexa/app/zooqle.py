@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-from app.logger import logger
+if __name__ == '__main__':
+    from logger import logger
+else:
+    from app.logger import logger
 import argparse
 from bs4 import BeautifulSoup
 import json
@@ -10,6 +13,7 @@ import requests
 import urllib.parse
 
 domain = 'https://zooqle.com'
+scrape_server = os.environ.get('scrape_server', '')
 pref_res = os.environ.get('pref_res', '1080p')
 pref_audio = os.environ.get('pref_audio', '5.1')
 pref_lang = os.environ.get('pref_lang', 'en')
@@ -68,155 +72,191 @@ def search_zooqle(name):
 
 def get_zooqle_suggestions(name, req_year=None):
     query_string = urllib.parse.quote_plus(name)
-    results = []
-    perfect_match = []
-    r = requests.get(f'{domain}/search?q={query_string}')
-    logger.debug(f'zooqle status code: {r.status_code}')
-    soup = BeautifulSoup(r.content, 'lxml')
-    ul = soup.find('ul', class_='suglist')
-    if not ul:
+    if req_year:
+        query_string = f'{query_string}&year={req_year}'
+    r = requests.get(f'{scrape_server}/suggestions?title={query_string}')
+    if r.status_code == 200:
+        if len(r.json()) > 5:
+            return r.json()[:5]
+        else:
+            return r.json()
+    else:
         return []
-    logger.debug('parsing {} title results from zooqle.com'.format(len(ul)))
-    for li in ul:
-        try:
-            title = li['title']
-        except AttributeError:
-            continue
-        try:
-            url = li.find('a', class_='sug')['href']
-        except AttributeError:
-            continue
-        try:
-            year = li.find('div', class_='sugInfo').get_text().split()[0]
-        except AttributeError:
-            year = None
-        try:
-            info = li.find('div', class_='sugInfo')
-            if info.find('i', class_='zqf-movies'):
-                category = 'movie'
-            elif info.find('i', class_='zqf-tv'):
-                category = 'tv show'
-            elif info.find('i', class_='zqf-game'):
-                category = 'game'
-            else:
-                category = None
-        except AttributeError:
-            category = None
-        results.append({
-            'title': title,
-            'year': year,
-            'url': f'{domain}{url}',
-            'category': category
-        })
-        if title.lower() == name.lower() and req_year and req_year == year:
-            perfect_match.append({'title': title, 'year': year, 'url': f'{domain}{url}'})
-    return perfect_match if perfect_match else results
 
 
-def list_available_torrents(url, category, season=None, episode=None):
-    results = []
-    res = ''
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, 'lxml')
-    try:
-        if soup.find('table', id='headcontent').find('i', class_='zqf-tv') and not season:
-            raise Exception('Found a TV show but season was not specified')
-    except AttributeError:
-        pass
-    # if requesting a specific season/episode, the torrent list will be on another page
+# def get_zooqle_suggestions(name, req_year=None):
+#     query_string = urllib.parse.quote_plus(name)
+#     results = []
+#     perfect_match = []
+#     r = requests.get(f'{domain}/search?q={query_string}')
+#     logger.debug(f'zooqle status code: {r.status_code}')
+#     soup = BeautifulSoup(r.content, 'lxml')
+#     ul = soup.find('ul', class_='suglist')
+#     if not ul:
+#         return []
+#     logger.debug('parsing {} title results from zooqle.com'.format(len(ul)))
+#     for li in ul:
+#         try:
+#             title = li['title']
+#         except AttributeError:
+#             continue
+#         try:
+#             url = li.find('a', class_='sug')['href']
+#         except AttributeError:
+#             continue
+#         try:
+#             year = li.find('div', class_='sugInfo').get_text().split()[0]
+#         except AttributeError:
+#             year = None
+#         try:
+#             info = li.find('div', class_='sugInfo')
+#             if info.find('i', class_='zqf-movies'):
+#                 category = 'movie'
+#             elif info.find('i', class_='zqf-tv'):
+#                 category = 'tv show'
+#             elif info.find('i', class_='zqf-game'):
+#                 category = 'game'
+#             else:
+#                 category = None
+#         except AttributeError:
+#             category = None
+#         results.append({
+#             'title': title,
+#             'year': year,
+#             'url': f'{domain}{url}',
+#             'category': category
+#         })
+#         if title.lower() == name.lower() and req_year and req_year == year:
+#             perfect_match.append({'title': title, 'year': year, 'url': f'{domain}{url}'})
+#     return perfect_match if perfect_match else results
+
+
+def list_available_torrents(url, season=None, episode=None):
+    query_string = f'/torrents?url={url}'
     if season:
-        if not episode:
-            raise Exception('Found a TV show but episode was not specified')
-        se_div = soup.find('div', id=f'se_{season}')
-        if se_div:
-            if episode:
-                for li in se_div.find_all('li'):
-                    if li.find('div', id=f'eps_{season}_{episode}'):
-                        try:
-                            eps_href = li.find('div', class_='pull-right').find('a')['href']
-                        except AttributeError:
-                            continue
-                        r = requests.get(f'{domain}{eps_href}')
-                        soup = BeautifulSoup(r.content, 'lxml')
-    table = soup.find('table', class_='table-torrents')
-    for tr in table.find_all('tr'):
-        tds = tr.find_all('td')
-        if not re.match(r'[0-9]+\.', tds[0].get_text()):
-            try:
-                res = tr.find('span').get_text().strip()
-            except AttributeError:
-                res = ''
-            continue
-        title = tds[1].find('a').get_text()
-        link = tds[1].find('a')['href']
-        try:
-            audio_format = tds[1].find('span', {'title': 'Audio format'}).get_text()
-        except AttributeError:
-            audio_format = ''
-        try:
-            languages = tds[1].find('span', {'title': 'Detected languages'}).get_text().split(',')
-        except AttributeError:
-            languages = []
-        size = tds[2].find('div', class_='prog-blue').get_text()
-        age = tds[3].get_text()
-        try:
-            seeders = tds[4].find('div', class_='prog-green').get_text()
-            seeders = text_to_integer(seeders)
-        except AttributeError:
-            seeders = 0
-        try:
-            leechers = tds[4].find('div', class_='prog-yellow').get_text()
-            leechers = text_to_integer(leechers)
-        except AttributeError:
-            leechers = 0
-        results.append({
-            'title': title,
-            'url': f'{domain}{link}',
-            'res': res,
-            'audio_format': audio_format,
-            'languages': languages,
-            'size': size,
-            'age': age,
-            'seeders': seeders,
-            'leechers': leechers
-        })
-    return results
+        query_string = f'{query_string}&season={season}'
+    if episode:
+        query_string = f'{query_string}&season={episode}'
+    r = requests.get(f'{scrape_server}{query_string}')
+    if r.status_code == 200:
+        return r.json()
+    else:
+        return []
+
+
+# def list_available_torrents(url, season=None, episode=None):
+#     results = []
+#     res = ''
+#     r = requests.get(url)
+#     soup = BeautifulSoup(r.content, 'lxml')
+#     try:
+#         if soup.find('table', id='headcontent').find('i', class_='zqf-tv') and not season:
+#             raise Exception('Found a TV show but season was not specified')
+#     except AttributeError:
+#         pass
+#     # if requesting a specific season/episode, the torrent list will be on another page
+#     if season:
+#         if not episode:
+#             raise Exception('Found a TV show but episode was not specified')
+#         se_div = soup.find('div', id=f'se_{season}')
+#         if se_div:
+#             if episode:
+#                 for li in se_div.find_all('li'):
+#                     if li.find('div', id=f'eps_{season}_{episode}'):
+#                         try:
+#                             eps_href = li.find('div', class_='pull-right').find('a')['href']
+#                         except AttributeError:
+#                             continue
+#                         r = requests.get(f'{domain}{eps_href}')
+#                         soup = BeautifulSoup(r.content, 'lxml')
+#     table = soup.find('table', class_='table-torrents')
+#     for tr in table.find_all('tr'):
+#         tds = tr.find_all('td')
+#         if not re.match(r'[0-9]+\.', tds[0].get_text()):
+#             try:
+#                 res = tr.find('span').get_text().strip()
+#             except AttributeError:
+#                 res = ''
+#             continue
+#         title = tds[1].find('a').get_text()
+#         link = tds[1].find('a')['href']
+#         try:
+#             audio_format = tds[1].find('span', {'title': 'Audio format'}).get_text()
+#         except AttributeError:
+#             audio_format = ''
+#         try:
+#             languages = tds[1].find('span', {'title': 'Detected languages'}).get_text().split(',')
+#         except AttributeError:
+#             languages = []
+#         size = tds[2].find('div', class_='prog-blue').get_text()
+#         age = tds[3].get_text()
+#         try:
+#             seeders = tds[4].find('div', class_='prog-green').get_text()
+#             seeders = text_to_integer(seeders)
+#         except AttributeError:
+#             seeders = 0
+#         try:
+#             leechers = tds[4].find('div', class_='prog-yellow').get_text()
+#             leechers = text_to_integer(leechers)
+#         except AttributeError:
+#             leechers = 0
+#         results.append({
+#             'title': title,
+#             'url': f'{domain}{link}',
+#             'res': res,
+#             'audio_format': audio_format,
+#             'languages': languages,
+#             'size': size,
+#             'age': age,
+#             'seeders': seeders,
+#             'leechers': leechers
+#         })
+#     return results
 
 
 def get_torrent_details(url):
-    details = {}
-    r = requests.get(f'{url}#mediainfo')
-    soup = BeautifulSoup(r.content, 'lxml')
-    dlPanel = soup.find('div', id='dlPanel')
-    for a in dlPanel.find_all('a'):
-        if a['href'].startswith('magnet'):
-            details['magnet_link'] = a['href']
-    return details
-    mediainfo = soup.find('div', id='mediainfo')
-    for tr in mediainfo.find_all('tr'):
-        if tr.find('i', class_='zqf-movies'):
-            for td in tr.find_all('td'):
-                if re.match(r'[0-9]+ x [0-9]+', td.get_text()):
-                    details['res'] = td.get_text()
-        elif tr.find('i', class_='zqf-mi-audio'):
-            audio_format = ''
-            for td in tr.find_all('td'):
-                if re.match(r'[0-9]+\.[0-9]+', td.get_text()):
-                    audio_format = td.get_text()
-                    try:
-                        details['audio_format'].append(audio_format)
-                    except KeyError:
-                        details['audio_format'] = [audio_format]
-        elif tr.find('i', class_='zqf-mi-subtitles'):
-            languages = ''
-            for td in tr.find_all('td'):
-                if td.get_text().split()[0].strip(':') in [pref_lang, lang_full[pref_lang]]:
-                    languages = td.get_text()
-                    try:
-                        details['languages'].append(languages)
-                    except KeyError:
-                        details['languages'] = [languages]
-    return details
+    query_string = f'/details?url={url}'
+    r = requests.get(f'{scrape_server}{query_string}')
+    if r.status_code == 200:
+        return r.json()
+    else:
+        return []
+
+
+# def get_torrent_details(url):
+#     details = {}
+#     r = requests.get(f'{url}#mediainfo')
+#     soup = BeautifulSoup(r.content, 'lxml')
+#     dlPanel = soup.find('div', id='dlPanel')
+#     for a in dlPanel.find_all('a'):
+#         if a['href'].startswith('magnet'):
+#             details['magnet_link'] = a['href']
+#     return details
+#     mediainfo = soup.find('div', id='mediainfo')
+#     for tr in mediainfo.find_all('tr'):
+#         if tr.find('i', class_='zqf-movies'):
+#             for td in tr.find_all('td'):
+#                 if re.match(r'[0-9]+ x [0-9]+', td.get_text()):
+#                     details['res'] = td.get_text()
+#         elif tr.find('i', class_='zqf-mi-audio'):
+#             audio_format = ''
+#             for td in tr.find_all('td'):
+#                 if re.match(r'[0-9]+\.[0-9]+', td.get_text()):
+#                     audio_format = td.get_text()
+#                     try:
+#                         details['audio_format'].append(audio_format)
+#                     except KeyError:
+#                         details['audio_format'] = [audio_format]
+#         elif tr.find('i', class_='zqf-mi-subtitles'):
+#             languages = ''
+#             for td in tr.find_all('td'):
+#                 if td.get_text().split()[0].strip(':') in [pref_lang, lang_full[pref_lang]]:
+#                     languages = td.get_text()
+#                     try:
+#                         details['languages'].append(languages)
+#                     except KeyError:
+#                         details['languages'] = [languages]
+#     return details
 
 
 if __name__ == '__main__':

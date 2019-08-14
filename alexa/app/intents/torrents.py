@@ -4,7 +4,7 @@ from app.helpers import get_slot, get_suggestion, sort_torrents
 from app.logger import logger
 from app.templating import render_template
 from app.transmission import transmission_client
-from app.zooqle import list_available_torrents
+from app.zooqle import list_available_torrents, get_torrent_details
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.utils import is_intent_name
 from ask_sdk_model.dialog import ElicitSlotDirective
@@ -58,8 +58,12 @@ class DownloadIntentHandler(AbstractRequestHandler):
         logger.info('user requested a download')
         title = get_slot('title')
         req_year = get_slot('year')
+        season = get_slot('season')
+        episode = get_slot('episode')
         logger.debug(f'title: {title}')
         logger.debug(f'year: {req_year}')
+        logger.debug(f'season: {season}')
+        logger.debug(f'episode: {episode}')
         if not title:
             logger.info('prompting user for the title of the movie/TV show')
             speech = "What would you like me to download?"
@@ -86,16 +90,21 @@ class DownloadIntentHandler(AbstractRequestHandler):
         category = session.attributes['zooqle']['suggestions'][selected_title]['category']
         if not session.attributes['zooqle']['selected torrent']:
             if not session.attributes['zooqle']['results']:
-                available_torrents = list_available_torrents(title_url, category)
+                available_torrents = list_available_torrents(title_url, season=season, episode=episode)
                 session.attributes['zooqle']['results'] = sort_torrents(title, available_torrents, req_year=req_year)
             torrent = session.attributes['zooqle']['results'][0]
             speech = describe_torrent_result(torrent)
             handler_input.response_builder.speak(speech).ask(speech)
             return handler_input.response_builder.response
         torrent = session.attributes['zooqle']['results'][0]
-        transmission_client.add_torrent(torrent['magnet_link'])
-        speech = "I've added the torrent to the download queue."
-        reprompt = "Is there anything else I can help you with?"
+        details = get_torrent_details(torrent['url'])
+        try:
+            transmission_client.add_torrent(details['magnet_link'])
+            speech = "I've added the torrent to the download queue."
+            reprompt = "Is there anything else I can help you with?"
+        except LookupError:
+            speech = "I couldn't find the magnet link for that torrent."
+            reprompt = "Would you like to try something else?"
         handler_input.response_builder.speak('  '.join(speech, reprompt)).ask(reprompt)
         return handler_input.response_builder.response
 
