@@ -90,8 +90,10 @@ class DownloadIntentHandler(AbstractRequestHandler):
             handler_input.response_builder.speak(speech).ask(speech)
             return handler_input.response_builder.response
         selected_title = session.attributes['zooqle']['selected title']
-        title_url = session.attributes['zooqle']['suggestions'][selected_title]['url']
-        category = session.attributes['zooqle']['suggestions'][selected_title]['category']
+        for suggestion in session.attributes['zooqle']['suggestions']:
+            if suggestion['url'] == selected_title['url']:
+                title_url = suggestion['url']
+                category = suggestion['category']
         if not session.attributes['zooqle']['selected torrent']:
             if not session.attributes['zooqle']['results']:
                 available_torrents = list_available_torrents(title_url, season=season, episode=episode)
