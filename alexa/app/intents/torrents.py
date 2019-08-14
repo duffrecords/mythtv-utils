@@ -120,7 +120,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
         session.attributes['state'] = ''
         session.attributes['zooqle']['selected title'] = None
         session.attributes['zooqle']['selected torrent'] = None
-        handler_input.response_builder.speak('  '.join(speech, reprompt)).ask(reprompt)
+        handler_input.response_builder.speak('  '.join([speech, reprompt])).ask(reprompt)
         return handler_input.response_builder.response
 
 

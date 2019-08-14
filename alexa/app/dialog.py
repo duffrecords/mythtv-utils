@@ -15,7 +15,7 @@ def describe_torrent_result(torrent):
         audio_format = torrent['audio_format'] + ' surround'
     else:
         audio_format = torrent['audio_format']
-    size = torrent['size'].replace(' MB', ' megabyte').replace(' GB', 'gigabyte')
+    size = torrent['size'].replace(' MB', ' megabyte').replace(' GB', ' gigabyte')
     speech = (
         f"The best result I found is {res} resolution, {audio_format}, in a {size} file."
         "Would you like me to download it?"
