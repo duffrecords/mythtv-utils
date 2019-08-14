@@ -23,6 +23,7 @@ class YesIntentHandler(AbstractRequestHandler):
             return DownloadIntentHandler().handle(handler_input)
         else:
             speech = "I'm not sure what you mean."
+            session.attributes['state'] = ''
         handler_input.response_builder.speak(speech).ask(speech)
         return handler_input.response_builder.response
 
@@ -46,6 +47,7 @@ class NoIntentHandler(AbstractRequestHandler):
                 speech = "Sorry, I couldn't find what you're looking for."
         else:
             speech = "I'm not sure what you mean."
+            session.attributes['state'] = ''
         handler_input.response_builder.speak(speech).ask(speech)
         return handler_input.response_builder.response
 
@@ -66,6 +68,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
         logger.debug(f'episode: {episode}')
         if not title:
             logger.info('prompting user for the title of the movie/TV show')
+            session.attributes['state'] = ''
             speech = "What would you like me to download?"
             reprompt = "What's the name of the movie or TV show you'd like me to download?"
             directives = [ElicitSlotDirective(slot_to_elicit='title')]
@@ -73,6 +76,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
             return response
         if not session.attributes['zooqle']['selected title']:
             logger.info('asking user if this is the correct title')
+            session.attributes['state'] = 'confirm torrent title'
             suggestion = get_suggestion(title, req_year=req_year)
             if not suggestion:
                 speech = f"I couldn't find anything matching {title}."
@@ -94,6 +98,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
                 session.attributes['zooqle']['results'] = sort_torrents(title, available_torrents, req_year=req_year)
             torrent = session.attributes['zooqle']['results'][0]
             speech = describe_torrent_result(torrent)
+            session.attributes['state'] = 'confirm torrent download'
             handler_input.response_builder.speak(speech).ask(speech)
             return handler_input.response_builder.response
         torrent = session.attributes['zooqle']['results'][0]
@@ -105,6 +110,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
         except LookupError:
             speech = "I couldn't find the magnet link for that torrent."
             reprompt = "Would you like to try something else?"
+        session.attributes['state'] = ''
         handler_input.response_builder.speak('  '.join(speech, reprompt)).ask(reprompt)
         return handler_input.response_builder.response
 
