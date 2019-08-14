@@ -110,6 +110,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
             return handler_input.response_builder.response
         torrent = session.attributes['zooqle']['results'][0]
         details = get_torrent_details(torrent['url'])
+        logger.debug(f'details: {details}')
         try:
             transmission_client.add_torrent(details['magnet_link'])
             speech = "I've added the torrent to the download queue."

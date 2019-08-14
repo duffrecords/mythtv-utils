@@ -8,7 +8,7 @@ def generate_response(handler_input, speech='', reprompt='', directives=[]):
 
 
 def describe_torrent_result(torrent):
-    res = torrent['res'].replace(' x ', ' by ')
+    res = torrent['res'].replace(' x ', ' by ').replace('Std', 'standard def')
     if torrent['audio_format'] == '2.0':
         audio_format = 'stereo'
     elif torrent['audio_format'] in ['7.1', '5.1']:

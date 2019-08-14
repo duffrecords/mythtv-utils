@@ -219,6 +219,7 @@ def list_available_torrents(url, season=None, episode=None):
 
 def get_torrent_details(url):
     query_string = f'/zooqle/v1/details?url={url}'
+    logger.debug(f'querying {scrape_server}{query_string}')
     r = requests.get(f'{scrape_server}{query_string}')
     if r.status_code == 200:
         return r.json()
