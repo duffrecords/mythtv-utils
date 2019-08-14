@@ -24,7 +24,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         session.attributes = {
-            'state' = '',
+            'state': '',
             'zooqle': {
                 'suggestions': [],
                 'results': [],
