@@ -84,20 +84,26 @@ def sort_torrents(title, torrents, category='movie', req_year=None, season=None,
         #     great_words.append(torrent['year'])
         if any(word in torrent['title'] for word in avoid_words):
             continue
-        size = text_to_integer(torrent['size'])
-        if size < config.strict_video_size[torrent['category']][0]:
+        size = text_to_integer(torrent.get('size', 0))
+        if torrent.get('category', ''):
+            if size < config.strict_video_size[torrent['category']][0]:
+                continue
+            if size > config.strict_video_size[torrent['category']][1]:
+                continue
+        else:
+            if size < config.strict_video_size['tv show'][0]:
+                continue
+            if size > config.strict_video_size['movie'][1]:
+                continue
+        if int(torrent.get('seeders', 0)) == 0:
             continue
-        if size > config.strict_video_size[torrent['category']][1]:
-            continue
-        if int(torrent['seeders']) == 0:
-            continue
-        if any(torrent['res'].startswith(res) for res in ['1080p', '1080i']):
+        if any(torrent.get('res', '').startswith(res) for res in ['1080p', '1080i']):
             hd1080.append(torrent)
-        elif ' x ' in torrent['res'] and int(torrent['res'].split()[-1]) > 720:
+        elif ' x ' in torrent.get('res', '') and int(torrent.get('res', '').split()[-1]) > 720:
             hd1080.append(torrent)
-        elif torrent['res'] == '720p':
+        elif torrent.get('res', '') == '720p':
             hd720.append(torrent)
-        elif ' x ' in torrent['res'] and int(torrent['res'].split()[-1]) > 480:
+        elif ' x ' in torrent.get('res', '') and int(torrent['res'].split()[-1]) > 480:
             hd720.append(torrent)
         else:
             other.append(torrent)
