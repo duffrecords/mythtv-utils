@@ -28,6 +28,8 @@ lang_full = {
 
 
 def text_to_integer(text):
+    if not text:
+        return 0
     if 'K' in text:
         integer = int(float(text.split()[0]) * 1000)
     elif 'M' in text:
@@ -35,13 +37,7 @@ def text_to_integer(text):
     elif 'B' in text:
         integer = int(float(text.split()[0]) * 1000000000)
     else:
-        try:
-            integer = int(float(text))
-        except ValueError:
-            logger.debug(f'text to integer: {text}')
-            integer = int(text)
-        except Exception:
-            integer = 0
+        integer = int(float(text))
     return integer
 
 
