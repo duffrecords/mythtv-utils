@@ -78,7 +78,6 @@ class DownloadIntentHandler(AbstractRequestHandler):
             return response
         if not session.attributes['zooqle']['selected title']:
             logger.info('asking user if this is the correct title')
-            session.attributes['state'] = 'confirm torrent title'
             suggestion = get_suggestion(title, req_year=req_year)
             if not suggestion:
                 speech = f"I couldn't find anything matching {title}."
@@ -86,6 +85,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
                 session.attributes['zooqle']['selected title'] = None
                 session.attributes['zooqle']['selected torrent'] = None
             else:
+                session.attributes['state'] = 'confirm torrent title'
                 speech = render_template(
                     'first_suggestion',
                     category=suggestion['category'],
@@ -102,7 +102,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
         if not session.attributes['zooqle']['selected torrent']:
             if not session.attributes['zooqle']['results']:
                 available_torrents = list_available_torrents(title_url, season=season, episode=episode)
-                session.attributes['zooqle']['results'] = sort_torrents(title, available_torrents, req_year=req_year)
+                session.attributes['zooqle']['results'] = sort_torrents(title, available_torrents, req_year=req_year)[:5]
             torrent = session.attributes['zooqle']['results'][0]
             speech = describe_torrent_result(torrent)
             session.attributes['state'] = 'confirm torrent download'
