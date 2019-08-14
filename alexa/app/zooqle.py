@@ -74,13 +74,16 @@ def get_zooqle_suggestions(name, req_year=None):
     query_string = urllib.parse.quote_plus(name)
     if req_year:
         query_string = f'{query_string}&year={req_year}'
-    r = requests.get(f'{scrape_server}/suggestions?title={query_string}')
+    logger.debug(f'querying {scrape_server}/zooqle/v1/suggestions?title={query_string}')
+    r = requests.get(f'{scrape_server}/zooqle/v1/suggestions?title={query_string}')
     if r.status_code == 200:
         if len(r.json()) > 5:
             return r.json()[:5]
         else:
             return r.json()
     else:
+        logger.debug(f'status code: {r.status_code}')
+        logger.debug(r.text)
         return []
 
 
@@ -132,7 +135,7 @@ def get_zooqle_suggestions(name, req_year=None):
 
 
 def list_available_torrents(url, season=None, episode=None):
-    query_string = f'/torrents?url={url}'
+    query_string = f'/zooqle/v1/torrents?url={url}'
     if season:
         query_string = f'{query_string}&season={season}'
     if episode:
@@ -215,7 +218,7 @@ def list_available_torrents(url, season=None, episode=None):
 
 
 def get_torrent_details(url):
-    query_string = f'/details?url={url}'
+    query_string = f'/zooqle/v1/details?url={url}'
     r = requests.get(f'{scrape_server}{query_string}')
     if r.status_code == 200:
         return r.json()
