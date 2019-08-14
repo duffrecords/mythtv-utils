@@ -58,7 +58,9 @@ class DownloadIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         logger.info('user requested a download')
-        title = get_slot('title', session.attributes['zooqle']['selected title']['title'])
+        title = get_slot('title')
+        if not title and session.attributes['zooqle']['selected title']:
+            title = session.attributes['zooqle']['selected title']['title']
         req_year = get_slot('year')
         season = get_slot('season')
         episode = get_slot('episode')
