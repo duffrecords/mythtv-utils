@@ -66,7 +66,7 @@ class DownloadIntentHandler(AbstractRequestHandler):
         logger.debug(f'year: {req_year}')
         logger.debug(f'season: {season}')
         logger.debug(f'episode: {episode}')
-        if not title:
+        if not title and not session.attributes['zooqle']['selected title']:
             logger.info('prompting user for the title of the movie/TV show')
             session.attributes['state'] = ''
             speech = "What would you like me to download?"
@@ -80,6 +80,9 @@ class DownloadIntentHandler(AbstractRequestHandler):
             suggestion = get_suggestion(title, req_year=req_year)
             if not suggestion:
                 speech = f"I couldn't find anything matching {title}."
+                session.attributes['state'] = ''
+                session.attributes['zooqle']['selected title'] = None
+                session.attributes['zooqle']['selected torrent'] = None
             else:
                 speech = render_template(
                     'first_suggestion',
@@ -113,6 +116,8 @@ class DownloadIntentHandler(AbstractRequestHandler):
             speech = "I couldn't find the magnet link for that torrent."
             reprompt = "Would you like to try something else?"
         session.attributes['state'] = ''
+        session.attributes['zooqle']['selected title'] = None
+        session.attributes['zooqle']['selected torrent'] = None
         handler_input.response_builder.speak('  '.join(speech, reprompt)).ask(reprompt)
         return handler_input.response_builder.response
 
