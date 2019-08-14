@@ -38,6 +38,7 @@ def text_to_integer(text):
         try:
             integer = int(float(text))
         except ValueError:
+            logger.debug(f'text to integer: {text}')
             integer = int(text)
         except Exception:
             integer = 0
