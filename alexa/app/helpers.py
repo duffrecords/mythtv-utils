@@ -38,7 +38,9 @@ def format_catalog(season=None, episode=None):
 
 def score_by_size(torrent, prefer_high_quality=False):
     size = text_to_integer(torrent['size'])
-    category = torrent['category']
+    category = torrent.get('category', '')
+    if not category:
+        return 0
     if prefer_high_quality:
         [ideal_min, ideal_max] = config.ideal_video_size[f"hd {category}"]
     else:
@@ -115,6 +117,12 @@ def sort_torrents(title, torrents, category='movie', req_year=None, season=None,
             delta = math.log(torrent['seeders'], 16)
             logger.debug("\tnumber of seeders: %+.2f points" % delta)
             torrent['score'] += delta
+            delta = score_by_size(torrent)
+            torrent['score'] += delta
+            if torrent.get('res', '').startswith('1080'):
+                delta = 1
+                logger.debug("\t%s resolution: %+.2f points" % (torrent.get('res', ''), delta))
+                torrent['score'] += delta
             for w in great_words:
                 if w in torrent['title']:
                     if w == req_year:

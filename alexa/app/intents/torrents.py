@@ -34,12 +34,14 @@ class NoIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         if session.attributes['state'] == 'confirm torrent title':
+            session.attributes['zooqle']['selected title'] = None
             try:
                 session.attributes['zooqle']['suggestions'].pop(0)
                 return DownloadIntentHandler().handle(handler_input)
             except IndexError:
                 speech = "Sorry, I couldn't find what you're looking for."
         elif session.attributes['state'] == 'confirm torrent download':
+            session.attributes['zooqle']['selected torrent'] = None
             try:
                 session.attributes['zooqle']['results'].pop(0)
                 return DownloadIntentHandler().handle(handler_input)
@@ -48,6 +50,8 @@ class NoIntentHandler(AbstractRequestHandler):
         else:
             speech = "I'm not sure what you mean."
             session.attributes['state'] = ''
+            handler_input.response_builder.speak(speech).set_should_end_session(True)
+            return handler_input.response_builder.response
         handler_input.response_builder.speak(speech).ask(speech)
         return handler_input.response_builder.response
 
